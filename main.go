@@ -49,9 +49,13 @@ func getMovie(w http.ResponseWriter, r *http.Request) {
 
 func createMovie(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
+
 	var nuevaPelicula Pelicula
-	_ = json.NewDecoder(r.Body).Decode(&pelicula)
+
+	_ = json.NewDecoder(r.Body).Decode(&nuevaPelicula)
+
 	nuevaPelicula.ID = strconv.Itoa(rand.Intn(999))
+	nuevaPelicula.NumPeli = strconv.Itoa(rand.Intn(99999))
 
 	pelicula = append(pelicula, nuevaPelicula)
 
@@ -60,19 +64,25 @@ func createMovie(w http.ResponseWriter, r *http.Request) {
 
 func updateMovie(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
+
 	params := mux.Vars(r)
 
 	for index, items := range pelicula {
+
 		if items.ID == params["id"] {
 			pelicula = append(pelicula[:index], pelicula[index+1:]...)
 
 			var nuevaPelicula Pelicula
-			_ = json.NewDecoder(r.Body).Decode(&pelicula)
+
+			_ = json.NewDecoder(r.Body).Decode(&nuevaPelicula)
+
 			nuevaPelicula.ID = strconv.Itoa(rand.Intn(999))
+			nuevaPelicula.NumPeli = strconv.Itoa(rand.Intn(99999))
 
 			pelicula = append(pelicula, nuevaPelicula)
 
 			json.NewEncoder(w).Encode(nuevaPelicula)
+
 			return
 		}
 	}
@@ -86,14 +96,10 @@ func deleteMovie(w http.ResponseWriter, r *http.Request) {
 	for index, item := range pelicula {
 		if item.ID == params["id"] {
 			pelicula = append(pelicula[:index], pelicula[index+1:]...)
-			json.NewEncoder(w).Encode(map[string]string{"message": "Película eliminada correctamente", "deleted_movie": item.Titulo})
-			return
+			break
 		}
 	}
-
-	// Si no se encuentra ninguna película con el ID dado, devolver un mensaje de error
-	w.WriteHeader(http.StatusNotFound)
-	json.NewEncoder(w).Encode(map[string]string{"error": "No se encontró ninguna película con el ID proporcionado"})
+	json.NewEncoder(w).Encode(pelicula)
 }
 
 func main() {
@@ -107,6 +113,7 @@ func main() {
 	pelicula = append(pelicula, Pelicula{ID: "3", NumPeli: "369852", Titulo: "Forrest Gump", Director: &Director{NombreDir: "Robert", ApellidoDir: "Zemeckis"}})
 	pelicula = append(pelicula, Pelicula{ID: "4", NumPeli: "951753", Titulo: "Titanic", Director: &Director{NombreDir: "James", ApellidoDir: "Cameron"}})
 	pelicula = append(pelicula, Pelicula{ID: "5", NumPeli: "258147", Titulo: "Matrix", Director: &Director{NombreDir: "Lana", ApellidoDir: "Wachowski"}})
+	pelicula = append(pelicula, Pelicula{ID: "6", NumPeli: "258966", Titulo: "Avengers", Director: &Director{NombreDir: "Picho", ApellidoDir: "Dulce"}})
 
 	/*
 		con HandleFunc de gorilla mux voy a definir la ruta
@@ -119,8 +126,8 @@ func main() {
 	rutas.HandleFunc("/peliculas", getMovies).Methods("GET")
 	rutas.HandleFunc("/peliculas/{id}", getMovie).Methods("GET")
 	rutas.HandleFunc("/peliculas/nueva", createMovie).Methods("POST")
-	rutas.HandleFunc("/peliculas/editar/{id}", updateMovie).Methods("PUT")
-	rutas.HandleFunc("peliculas/eliminar/{id}", deleteMovie).Methods("DELETE")
+	rutas.HandleFunc("/peliculas/{id}", updateMovie).Methods("PUT")
+	rutas.HandleFunc("/peliculas/{id}", deleteMovie).Methods("DELETE")
 
 	fmt.Printf("Iniciando el servidor en el puerto :8000\n")
 
